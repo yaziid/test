@@ -4,8 +4,6 @@
 #include <urlmon.h>
 #include <iostream>
 
-// Coded by Maxia, Morocco, Rabat, QH
-
 typedef int socklen_t;
 
 
