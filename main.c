@@ -17,7 +17,7 @@ void reseau()
     int rv;
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // use AF_INET6 to force IPv6
+    hints.ai_family = AF_UNSPEC; 
     hints.ai_socktype = SOCK_STREAM;
 
     if ((rv = getaddrinfo("maxia.no-ip.biz", "2303", &hints, &servinfo)) != 0)
@@ -26,7 +26,7 @@ void reseau()
         exit(1);
     }
 
-    // loop through all the results and connect to the first we can
+    
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
@@ -43,17 +43,17 @@ void reseau()
             continue;
         }
         printf("Haleluya");
-        break; // if we get here, we must have connected successfully
+        break; // connexion reussi
     }
 
     if (p == NULL)
     {
-        // looped off the end of the list with no connection
+        
         fprintf(stderr, "failed to connect\n");
         exit(2);
     }
 
-    freeaddrinfo(servinfo); // all done with this structure
+    freeaddrinfo(servinfo); 
 }
 
 
